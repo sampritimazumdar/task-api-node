@@ -1,41 +1,45 @@
 const express = require('express');
 const mongoose = require('mongoose');
-require('dotenv').config(); // Loads variables from .env
+const cors = require('cors'); // 1. Make sure this is here
+require('dotenv').config();
 
 const app = express();
+
+// 2. This MUST be before your routes!
+app.use(cors()); 
 app.use(express.json());
 
-// This reads the hidden password from your .env file
 const dbURI = process.env.MONGODB_URI;
 
 mongoose.connect(dbURI)
   .then(() => console.log("Connected to MongoDB!"))
   .catch((err) => console.log("Database connection error:", err));
 
-// Create the Task Model
 const Task = mongoose.model('Task', { name: String });
 
-// GET route: Fetch all tasks
 app.get('/', async (req, res) => {
-  try {
-    const allTasks = await Task.find();
-    res.json(allTasks);
-  } catch (error) {
-    res.status(500).send("Error fetching tasks");
-  }
+  const allTasks = await Task.find();
+  res.json(allTasks);
 });
 
-// POST route: Add a new task
 app.post('/add-task', async (req, res) => {
+  const newTask = new Task({ name: req.body.taskName });
+  await newTask.save();
+  res.send("Success! Task saved to database: " + req.body.taskName);
+});
+
+// DELETE route: Remove a task by its ID
+app.delete('/delete-task/:id', async (req, res) => {
   try {
-    const newTask = new Task({ name: req.body.taskName });
-    await newTask.save();
-    res.send("Success! Task saved to database: " + req.body.taskName);
+    const taskId = req.params.id;
+    await Task.findByIdAndDelete(taskId);
+    res.send("Task deleted successfully!");
   } catch (error) {
-    res.status(500).send("Error saving task");
+    res.status(500).send("Error deleting task");
   }
 });
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });
