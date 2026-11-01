@@ -39,7 +39,9 @@ app.delete('/delete-task/:id', async (req, res) => {
   }
 });
 
+// This tells Render to use its assigned port, or fall back to 3000 for local testing.
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
