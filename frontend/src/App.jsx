@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, CheckCircle2, Circle, Search, Plus } from 'lucide-react';
+import { Trash2, CheckCircle2, Circle, Search } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -41,22 +41,17 @@ function App() {
 
   const handleDeleteTask = async (id) => {
     try {
-      await fetch(`${API_URL}/delete-task/${id}`, {
-        method: 'DELETE'
-      });
+      await fetch(`${API_URL}/delete-task/${id}`, { method: 'DELETE' });
       fetchTasks(); 
     } catch (error) {
       console.log("Error deleting task:", error);
     }
   };
 
-  // NEW: Handle clicking the circle
   const handleToggleComplete = async (id) => {
     try {
-      await fetch(`${API_URL}/update-task/${id}`, {
-        method: 'PUT'
-      });
-      fetchTasks(); // Refresh the list to show the new status
+      await fetch(`${API_URL}/update-task/${id}`, { method: 'PUT' });
+      fetchTasks(); 
     } catch (error) {
       console.log("Error updating task:", error);
     }
@@ -67,104 +62,87 @@ function App() {
   );
 
   return (
-    // Pure black background with the animated stars
-    <div className="min-h-screen bg-black bg-stars text-slate-200 flex items-center justify-center p-4 relative overflow-hidden">
+    // The main container centers the max-w-xl column, but leaves text inside left-aligned
+    <div 
+      className="min-h-screen bg-black bg-stars text-white flex flex-col items-center py-20 px-4 relative"
+      style={{ fontFamily: 'Cambria, Cochin, Georgia, Times, "Times New Roman", serif' }}
+    >
       
-      {/* Whimsical glowing background effects */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-pulse"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-pulse"></div>
-
-      {/* Main Dashboard Card */}
-      <div className="w-full max-w-2xl bg-black/60 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-[0_0_50px_rgba(255,255,255,0.05)] overflow-hidden relative z-10">
+      <div className="w-full max-w-xl relative z-10">
         
-        {/* Header */}
-        <div className="p-8 border-b border-slate-700/50 bg-black/40">
-          <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-            Task Dashboard ✨
-          </h1>
-          <p className="text-slate-400 mt-2">Manage your daily workflow under the stars.</p>
+        {/* The title is the ONLY thing forced to the exact center */}
+        <h1 className="text-5xl font-bold mb-12 text-center tracking-widest text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] w-full block">
+          TO DO LIST
+        </h1>
+
+        {/* Input Area - Back to normal side-by-side layout */}
+        <form onSubmit={handleAddTask} className="flex gap-2 mb-8 border-b-2 border-gray-700 pb-4">
+          <input 
+            type="text" 
+            value={newTask} 
+            onChange={(e) => setNewTask(e.target.value)} 
+            placeholder="Add a new task..."
+            className="flex-1 bg-transparent text-white text-xl px-2 py-2 focus:outline-none placeholder-gray-600"
+            style={{ fontFamily: 'Cambria, Cochin, Georgia, Times, "Times New Roman", serif' }}
+          />
+          <button 
+            type="submit" 
+            className="text-white font-bold px-4 py-2 hover:text-purple-400 transition-colors cursor-pointer text-xl"
+          >
+            Add
+          </button>
+        </form>
+
+        {/* Search Bar - Normal layout */}
+        <div className="mb-8">
+          <input 
+            type="text" 
+            placeholder="Search tasks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-transparent text-gray-400 text-lg px-2 py-1 border-b border-gray-800 focus:outline-none focus:border-gray-500 placeholder-gray-700"
+            style={{ fontFamily: 'Cambria, Cochin, Georgia, Times, "Times New Roman", serif' }}
+          />
         </div>
 
-        <div className="p-8">
-          {/* Add Task Form */}
-          <form onSubmit={handleAddTask} className="flex gap-3 mb-6">
-            <input 
-              type="text" 
-              value={newTask} 
-              onChange={(e) => setNewTask(e.target.value)} 
-              placeholder="Add a new task..."
-              className="flex-1 bg-slate-900/50 text-white border border-slate-600/50 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400 transition-all text-sm placeholder-slate-500"
-            />
-            <button 
-              type="submit" 
-              className="bg-purple-600 hover:bg-purple-500 text-white font-medium px-6 py-3 rounded-lg transition-all flex items-center gap-2 text-sm cursor-pointer shadow-[0_0_15px_rgba(147,51,234,0.5)]"
-            >
-              <Plus size={18} /> Add
-            </button>
-          </form>
-
-          {/* Search Bar */}
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-3 text-slate-500" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search the stars..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900/50 text-white border border-slate-600/50 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-purple-400 text-sm placeholder-slate-500"
-            />
-          </div>
-
-          {/* Task List */}
-          <div className="space-y-3">
-            {filteredTasks.length === 0 ? (
-              <div className="text-center py-10 text-slate-500">
-                <CheckCircle2 size={40} className="mx-auto mb-3 opacity-50 text-purple-400" />
-                <p>The sky is clear. No tasks found!</p>
-              </div>
-            ) : (
-              filteredTasks.map((task) => (
-                <div 
-                  key={task._id} 
-                  className="group flex items-center justify-between p-4 bg-slate-900/40 backdrop-blur-sm border border-slate-700/50 rounded-xl hover:border-purple-500/50 hover:bg-slate-800/60 transition-all duration-300 shadow-[0_0_10px_rgba(0,0,0,0.5)]"
-                >
-                  <div className="flex items-center gap-4">
-                    
-                    {/* Clickable Circle/Checkmark */}
-                    <button onClick={() => handleToggleComplete(task._id)} className="cursor-pointer">
-                      {task.isCompleted ? (
-                        <CheckCircle2 size={20} className="text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
-                      ) : (
-                        <Circle size={20} className="text-slate-600 group-hover:text-purple-400 transition-colors" />
-                      )}
-                    </button>
-                    
-                    <div>
-                      {/* Strikethrough if completed */}
-                      <p className={`font-medium ${task.isCompleted ? 'line-through text-slate-500' : 'text-slate-200'}`}>
-                        {task.name ? task.name : task}
-                      </p>
-                      
-                      {/* Date */}
-                      {task.createdAt && (
-                        <p className="text-xs text-slate-500 mt-1">
-                          {new Date(task.createdAt).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+        {/* Task List - Normal layout */}
+        <div className="space-y-4">
+          {filteredTasks.length === 0 ? (
+            <p className="text-gray-600 text-center text-lg italic mt-10">No tasks found.</p>
+          ) : (
+            filteredTasks.map((task) => (
+              <div 
+                key={task._id} 
+                className="group flex items-center justify-between border-b border-gray-800 pb-3 pt-2"
+              >
+                <div className="flex items-center gap-4">
                   
-                  {/* Delete Button */}
-                  <button 
-                    onClick={() => handleDeleteTask(task._id)}
-                    className="text-slate-600 hover:text-red-400 transition-colors p-2 cursor-pointer opacity-0 group-hover:opacity-100 hover:drop-shadow-[0_0_8px_rgba(248,113,113,0.8)]"
-                  >
-                    <Trash2 size={20} />
+                  {/* Clickable Circle/Checkmark */}
+                  <button onClick={() => handleToggleComplete(task._id)} className="cursor-pointer text-gray-500 hover:text-white transition-colors">
+                    {task.isCompleted ? (
+                      <CheckCircle2 size={20} className="text-purple-400" />
+                    ) : (
+                      <Circle size={20} />
+                    )}
                   </button>
+                  
+                  <div>
+                    <p className={`text-xl transition-all duration-300 ${task.isCompleted ? 'line-through text-gray-600 italic' : 'text-gray-200'}`}>
+                      {task.name ? task.name : task}
+                    </p>
+                  </div>
                 </div>
-              ))
-            )}
-          </div>
+                
+                {/* Delete Button */}
+                <button 
+                  onClick={() => handleDeleteTask(task._id)}
+                  className="text-transparent group-hover:text-gray-500 hover:!text-red-500 transition-colors p-2 cursor-pointer"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
