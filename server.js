@@ -1,11 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors'); // 1. Make sure this is here
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 
-// 2. This MUST be before your routes!
+// Middleware
 app.use(cors()); 
 app.use(express.json());
 
@@ -15,20 +15,35 @@ mongoose.connect(dbURI)
   .then(() => console.log("Connected to MongoDB!"))
   .catch((err) => console.log("Database connection error:", err));
 
-const Task = mongoose.model('Task', { name: String });
+// Updated Model to include createdAt and isCompleted
+const Task = mongoose.model('Task', { 
+  name: String,
+  createdAt: { type: Date, default: Date.now },
+  isCompleted: { type: Boolean, default: false }
+});
 
+// GET all tasks
 app.get('/', async (req, res) => {
-  const allTasks = await Task.find();
-  res.json(allTasks);
+  try {
+    const allTasks = await Task.find();
+    res.json(allTasks);
+  } catch (error) {
+    res.status(500).send("Error fetching tasks");
+  }
 });
 
+// POST a new task
 app.post('/add-task', async (req, res) => {
-  const newTask = new Task({ name: req.body.taskName });
-  await newTask.save();
-  res.send("Success! Task saved to database: " + req.body.taskName);
+  try {
+    const newTask = new Task({ name: req.body.taskName });
+    await newTask.save();
+    res.send("Success! Task saved to database: " + req.body.taskName);
+  } catch (error) {
+    res.status(500).send("Error saving task");
+  }
 });
 
-// DELETE route: Remove a task by its ID
+// DELETE a task
 app.delete('/delete-task/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -39,7 +54,23 @@ app.delete('/delete-task/:id', async (req, res) => {
   }
 });
 
-// This tells Render to use its assigned port, or fall back to 3000 for local testing.
+// PUT (update) a task's completion status
+app.put('/update-task/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const task = await Task.findById(taskId);
+    
+    // Flip the boolean (true to false, false to true)
+    task.isCompleted = !task.isCompleted;
+    await task.save();
+    
+    res.send("Task updated successfully!");
+  } catch (error) {
+    res.status(500).send("Error updating task");
+  }
+});
+
+// Start the server
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
